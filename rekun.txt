@@ -82,8 +82,7 @@ local PickerBox = Instance.new("Frame", PickerOverlay); PickerBox.Size = UDim2.n
 local Wheel = Instance.new("ImageLabel", PickerBox); Wheel.Size = UDim2.new(0, 180, 0, 180); Wheel.Position = UDim2.new(0.5, -90, 0, 20); Wheel.Image = "rbxassetid://6020299385"; Wheel.BackgroundTransparency = 1
 local SelectorDot = Instance.new("Frame", Wheel); SelectorDot.Size = UDim2.new(0, 14, 0, 14); SelectorDot.AnchorPoint = Vector2.new(0.5, 0.5); SelectorDot.BackgroundColor3 = Color3.new(1,1,1); SelectorDot.BorderSizePixel = 2; SelectorDot.BorderColor3 = Color3.new(0,0,0); Instance.new("UICorner", SelectorDot).CornerRadius = UDim.new(1,0); SelectorDot.Visible = true
 
--- RGB CUSTOMIZATION (You requested: make rgb number customizable)
-local RGBInput = Instance.new("TextBox", PickerBox); RGBInput.Size = UDim2.new(0.8, 0, 0, 30); RGBInput.Position = UDim2.new(0.1, 0, 0, 210); RGBInput.Text = "255, 255, 255"; RGBDisplay = RGBInput; RGBInput.BackgroundColor3 = Color3.fromRGB(40, 40, 45); RGBInput.TextColor3 = Color3.new(1,1,1); RGBInput.Font = Enum.Font.GothamBold; Instance.new("UICorner", RGBInput)
+local RGBInput = Instance.new("TextBox", PickerBox); RGBInput.Size = UDim2.new(0.8, 0, 0, 30); RGBInput.Position = UDim2.new(0.1, 0, 0, 210); RGBInput.Text = "255, 255, 255"; RGBInput.BackgroundColor3 = Color3.fromRGB(40, 40, 45); RGBInput.TextColor3 = Color3.new(1,1,1); RGBInput.Font = Enum.Font.GothamBold; Instance.new("UICorner", RGBInput)
 local ClosePick = Instance.new("TextButton", PickerBox); ClosePick.Size = UDim2.new(0.8, 0, 0, 35); ClosePick.Position = UDim2.new(0.1, 0, 1, -45); ClosePick.Text = "CONFIRM"; ClosePick.BackgroundColor3 = Color3.fromRGB(0, 150, 100); ClosePick.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", ClosePick)
 
 local currentTargetBtn, lastUpdate = nil, 0
@@ -102,7 +101,6 @@ local function updatePicker(input)
     SelectorDot.Position = UDim2.new(0.5, (delta.Unit * (sat * radius)).X, 0.5, (delta.Unit * (sat * radius)).Y)
 end
 
--- Update Wheel when typing exact RGB Numbers
 RGBInput.FocusLost:Connect(function()
     local r, g, b = string.match(RGBInput.Text, "(%d+)%D+(%d+)%D+(%d+)")
     if r and g and b then
@@ -110,14 +108,10 @@ RGBInput.FocusLost:Connect(function()
         local customColor = Color3.fromRGB(r, g, b)
         if currentTargetBtn then currentTargetBtn.BackgroundColor3 = customColor end
         RGBInput.Text = string.format("%d, %d, %d", r, g, b)
-        
-        -- Update Selector Dot to match typed color perfectly
         local h, s, v = Color3.toHSV(customColor)
         local radius = Wheel.AbsoluteSize.X / 2
         local angle = (h * math.pi * 2) - math.pi / 2
-        local offsetX = math.cos(angle) * (s * radius)
-        local offsetY = math.sin(angle) * (s * radius)
-        SelectorDot.Position = UDim2.new(0.5, offsetX, 0.5, offsetY)
+        SelectorDot.Position = UDim2.new(0.5, math.cos(angle) * (s * radius), 0.5, math.sin(angle) * (s * radius))
     end
 end)
 
@@ -145,7 +139,7 @@ for _, name in ipairs(faces) do
     faceData[name] = {txtBox = txt, clrBtn = clr}
 end
 
--- [[ 7. CORE LOGIC (PAINTER/EXECUTION) ]] --
+-- [[ 7. CORE LOGIC (PAINTER/EXECUTION WITH FIXED TOXIC/ANCHOR) ]] --
 local useToxic, autoAnchor, spamming = true, true, false
 
 local function runFix(isCleaning)
@@ -156,26 +150,32 @@ local function runFix(isCleaning)
     local remote = tool:FindFirstChild("Event", true) or tool:FindFirstChildWhichIsA("RemoteEvent", true)
     local rootPart = char:FindFirstChild("HumanoidRootPart")
     if not remote or not brick or not rootPart then return end
+    
     local rootPos = rootPart.Position
     local key = "both \u{1F91D}"
     
-    -- Step 1: Base
     local mat = isCleaning and "plastic" or (useToxic and "toxic" or "plastic")
     local col = isCleaning and Color3.fromRGB(163, 162, 165) or Color3.new(0,0,0)
-    remote:FireServer(brick, Enum.NormalId.Top, rootPos, key, col, mat, "")
-    task.wait(0.5)
     
-    -- Step 2: Numeric Sides Loop
+    -- Step 1: Base & Material (Restored Exact Arguments)
+    pcall(function() remote:FireServer(brick, Enum.NormalId.Top, rootPos, key, col, mat, "anchor") end)
+    task.wait(0.4)
+    
+    -- Step 2: Auto Anchor (Restored Exact Arguments)
+    if autoAnchor then 
+        pcall(function() remote:FireServer(brick, Enum.NormalId.Top, rootPos, key, col, "anchor", "") end)
+        task.wait(0.4) 
+    end
+    
+    -- Step 3: Numeric Sides Loop
     for sideNum = 0, 5 do
         local faceName
         for n, id in pairs(nameToId) do if id == sideNum then faceName = n break end end
         local cfg = faceData[faceName]
         local sideEnum = Enum.NormalId:GetEnumItems()[sideNum + 1]
-        remote:FireServer(brick, sideEnum, rootPos, key, cfg.clrBtn.BackgroundColor3, "spray", cfg.txtBox.Text)
-        task.wait(0.25)
+        pcall(function() remote:FireServer(brick, sideEnum, rootPos, key, cfg.clrBtn.BackgroundColor3, "spray", cfg.txtBox.Text) end)
+        task.wait(0.2)
     end
-    -- Step 3: Anchor
-    if autoAnchor then remote:FireServer(brick, Enum.NormalId.Top, rootPos, "material", Color3.new(0,0,0), "anchor", "") end
 end
 
 -- [[ 8. MAIN BUTTONS & NUKER FIXER ]] --
@@ -183,8 +183,12 @@ local function createBtn(text, color)
     local btn = Instance.new("TextButton", Container); btn.Size = UDim2.new(0.95, 0, 0, 35); btn.BackgroundColor3 = color; btn.Text = text; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.GothamBold; Instance.new("UICorner", btn); return btn
 end
 
-createBtn("Material: TOXIC", Color3.fromRGB(100, 0, 200)).MouseButton1Click:Connect(function(b) useToxic = not useToxic; b.Text = "Material: "..(useToxic and "TOXIC" or "OFF") end)
-createBtn("Auto-Anchor: ON", Color3.fromRGB(0, 100, 200)).MouseButton1Click:Connect(function(b) autoAnchor = not autoAnchor; b.Text = "Auto-Anchor: "..(autoAnchor and "ON" or "OFF") end)
+local MatBtn = createBtn("Material: TOXIC", Color3.fromRGB(100, 0, 200))
+MatBtn.MouseButton1Click:Connect(function() useToxic = not useToxic; MatBtn.Text = "Material: "..(useToxic and "TOXIC" or "OFF") end)
+
+local AncBtn = createBtn("Auto-Anchor: ON", Color3.fromRGB(0, 100, 200))
+AncBtn.MouseButton1Click:Connect(function() autoAnchor = not autoAnchor; AncBtn.Text = "Auto-Anchor: "..(autoAnchor and "ON" or "OFF") end)
+
 local SpamBtn = createBtn("Spam Mode: OFF", Color3.fromRGB(50, 50, 55)); SpamBtn.MouseButton1Click:Connect(function() spamming = not spamming; SpamBtn.Text = "Spam Mode: "..(spamming and "ON" or "OFF") end)
 
 local ToxicPreset = createBtn("LOAD TOXIC PRESET", Color3.fromRGB(150, 0, 0))
@@ -194,7 +198,6 @@ ToxicPreset.MouseButton1Click:Connect(function()
     for n, t in pairs(p) do faceData[n].txtBox.Text = t; faceData[n].clrBtn.BackgroundColor3 = Color3.new(1,0,0) end
 end)
 
--- NUKER FIXER RESTORED
 local FixBtn = createBtn("FIX / CLEAN BRICK (Nuker Fixer)", Color3.fromRGB(120, 120, 130))
 FixBtn.MouseButton1Click:Connect(function()
     useToxic = false; autoAnchor = true
@@ -247,7 +250,7 @@ UserInputService.InputChanged:Connect(function(input)
     if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local pct = math.clamp((input.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
         SliderFill.Size = UDim2.new(pct, 0, 1, 0)
-        daurarange = math.floor(35 + (pct * 165)) -- Exact mapping: 35 to 200
+        daurarange = math.floor(35 + (pct * 165))
         SliderLabel.Text = "Aura Range: " .. daurarange
     end
 end)
@@ -321,4 +324,4 @@ end)
 RevealBtn.MouseButton1Click:Connect(updateSlots)
 updateSlots()
 
-print("MANE LOADED COMPLETELY - 100% FEATURES ACTIVE.")
+print("MANE LOADED COMPLETELY - EXECUTION FIXED.")
