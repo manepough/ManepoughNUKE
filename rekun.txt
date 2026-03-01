@@ -1,4 +1,4 @@
--- [[ 1. SAFE LOADSTRING & WHITELIST ]] --
+-- [[ 1. SAFE LOADSTRING ]] --
 local function safeLoad(url)
     local success, code = pcall(game.HttpGet, game, url)
     if not success then warn("Failed to fetch code: " .. tostring(code)) return end
@@ -9,233 +9,241 @@ local function safeLoad(url)
     else
         warn("Syntax error in loaded code: " .. tostring(compileError))
     end
-[cite_start]end [cite: 1, 2]
+end
 
+-- [[ 2. WHITELIST SYSTEM - SYNTAX FIX ]] --
 local whitelistedIDs = {
     [10429099415] = "FLAMEFAML",
-    [9693065023] = "kupal_isme8",
+    [9693065023] = "kupal_isme8"
 }
 
 local player = game:GetService("Players").LocalPlayer
 if not whitelistedIDs[player.UserId] then
     player:Kick("Unauthorized User: You are not on the whitelist.")
     return 
-[cite_start]end [cite: 2]
+end
 
--- [[ 2. SERVICES & SETUP ]] --
+-- [[ 3. SERVICES & SETUP ]] --
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-[cite_start]local brick = ReplicatedStorage:WaitForChild("Brick", 5) [cite: 2]
+local brick = ReplicatedStorage:WaitForChild("Brick", 5)
 
-[cite_start]if makefolder then pcall(function() makefolder("WindConfigs") end) end [cite: 2]
+if makefolder then pcall(function() makefolder("WindConfigs") end) end
 
--- [[ 3. UI ROOT & TOGGLE ]] --
+-- [[ 4. UI ROOT & MOBILE DRAGGABLE TOGGLE ]] --
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 ScreenGui.Name = "WindUltimate_GodMode"
 ScreenGui.ResetOnSpawn = false
-[cite_start]ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling [cite: 2]
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 340, 0, 520)
 Main.Position = UDim2.new(0.5, -170, 0.5, -260)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-Main.BorderSizePixel = 0
 Main.Visible = false
-[cite_start]Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10) [cite: 4]
+Instance.new("UICorner", Main)
 
 local MobileToggle = Instance.new("TextButton", ScreenGui)
-MobileToggle.Size = UDim2.new(0, 45, 0, 45)
-MobileToggle.Position = UDim2.new(0.05, 0, 0.1, 0)
-MobileToggle.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MobileToggle.Size = UDim2.new(0, 50, 0, 50)
+MobileToggle.Position = UDim2.new(0.1, 0, 0.1, 0)
 MobileToggle.Text = "MANE"
+MobileToggle.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 MobileToggle.TextColor3 = Color3.fromRGB(0, 255, 150)
 MobileToggle.Font = Enum.Font.GothamBold
-MobileToggle.TextSize = 14
-[cite_start]Instance.new("UICorner", MobileToggle).CornerRadius = UDim.new(1, 0) [cite: 3, 4]
+Instance.new("UICorner", MobileToggle).CornerRadius = UDim.new(1, 0)
 
--- Draggable Toggle Logic
+-- Toggle Drag/Tap Logic
 local toggleDrag, hasMoved = false, false
-local toggleStartPos, toggleStartInput
-MobileToggle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        toggleDrag = true; hasMoved = false
-        toggleStartPos = MobileToggle.Position; toggleStartInput = input.Position
-    end
+local tStartPos, tStartInput
+MobileToggle.InputBegan:Connect(function(i) 
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
+        toggleDrag = true; hasMoved = false; tStartPos = MobileToggle.Position; tStartInput = i.Position 
+    end 
 end)
-UserInputService.InputChanged:Connect(function(input)
-    if toggleDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - toggleStartInput
-        if delta.Magnitude > 3 then 
-            hasMoved = true
-            MobileToggle.Position = UDim2.new(toggleStartPos.X.Scale, toggleStartPos.X.Offset + delta.X, toggleStartPos.Y.Scale, toggleStartPos.Y.Offset + delta.Y)
-        end
-    end
+UserInputService.InputChanged:Connect(function(i) 
+    if toggleDrag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then 
+        local d = i.Position - tStartInput; if d.Magnitude > 3 then hasMoved = true; MobileToggle.Position = UDim2.new(tStartPos.X.Scale, tStartPos.X.Offset + d.X, tStartPos.Y.Scale, tStartPos.Y.Offset + d.Y) end 
+    end 
 end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        if toggleDrag then toggleDrag = false; if not hasMoved then Main.Visible = not Main.Visible end end
-    end
-[cite_start]end) [cite: 5, 6]
+UserInputService.InputEnded:Connect(function(i) 
+    if toggleDrag then toggleDrag = false; if not hasMoved then Main.Visible = not Main.Visible end end 
+end)
 
--- [[ 4. MAIN CONTAINER ]] --
 local Container = Instance.new("ScrollingFrame", Main)
-Container.Size = UDim2.new(1, -20, 1, -55)
+Container.Size = UDim2.new(1, -20, 1, -60)
 Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 2
-Container.CanvasSize = UDim2.new(0, 0, 0, 1800)
-local UIList = Instance.new("UIListLayout", Container)
-UIList.Padding = UDim.new(0, 6); [cite_start]UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center [cite: 7, 8]
+Container.CanvasSize = UDim2.new(0, 0, 0, 1600)
+Container.ScrollBarThickness = 3
+local UIList = Instance.new("UIListLayout", Container); UIList.Padding = UDim.new(0, 6)
 
 -- [[ 5. COLOR PICKER ]] --
-local PickerOverlay = Instance.new("Frame", ScreenGui); PickerOverlay.Size = UDim2.new(1, 0, 1, 0); PickerOverlay.BackgroundColor3 = Color3.new(0,0,0); PickerOverlay.BackgroundTransparency = 0.5; PickerOverlay.Visible = false; [cite_start]PickerOverlay.Active = true [cite: 9, 10]
-local PickerBox = Instance.new("Frame", PickerOverlay); PickerBox.Size = UDim2.new(0, 220, 0, 280); PickerBox.Position = UDim2.new(0.5, -110, 0.5, -140); PickerBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30); [cite_start]Instance.new("UICorner", PickerBox).CornerRadius = UDim.new(0, 10) [cite: 11]
-local WheelImage = Instance.new("ImageLabel", PickerBox); WheelImage.Name = "Wheel"; WheelImage.Size = UDim2.new(0, 160, 0, 160); WheelImage.Position = UDim2.new(0.5, -80, 0, 20); WheelImage.Image = "rbxassetid://6020299385"; [cite_start]WheelImage.BackgroundTransparency = 1 [cite: 12, 13]
-local SelectorDot = Instance.new("Frame", PickerBox); SelectorDot.Size = UDim2.new(0, 18, 0, 18); SelectorDot.AnchorPoint = Vector2.new(0.5, 0.5); SelectorDot.BackgroundColor3 = Color3.new(1,1,1); SelectorDot.BackgroundTransparency = 0.15; SelectorDot.BorderSizePixel = 3; SelectorDot.BorderColor3 = Color3.new(0.1,0.1,0.1); Instance.new("UICorner", SelectorDot).CornerRadius = UDim.new(1,0); [cite_start]SelectorDot.Visible = false [cite: 14]
-local RGBDisplay = Instance.new("TextLabel", PickerBox); RGBDisplay.Size = UDim2.new(1, 0, 0, 20); RGBDisplay.Position = UDim2.new(0, 0, 0, 190); RGBDisplay.Text = "255, 255, 255"; RGBDisplay.TextColor3 = Color3.new(1,1,1); RGBDisplay.Font = Enum.Font.GothamBold; RGBDisplay.TextSize = 14; [cite_start]RGBDisplay.BackgroundTransparency = 1 [cite: 15, 16]
-local ClosePickerBtn = Instance.new("TextButton", PickerBox); ClosePickerBtn.Size = UDim2.new(0.8, 0, 0, 35); ClosePickerBtn.Position = UDim2.new(0.1, 0, 1, -45); ClosePickerBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 80); ClosePickerBtn.Text = "CONFIRM"; ClosePickerBtn.Font = Enum.Font.GothamBold; ClosePickerBtn.TextColor3 = Color3.new(1,1,1); [cite_start]Instance.new("UICorner", ClosePickerBtn) [cite: 17, 18]
+local PickerOverlay = Instance.new("Frame", ScreenGui); PickerOverlay.Size = UDim2.new(1, 0, 1, 0); PickerOverlay.BackgroundColor3 = Color3.new(0,0,0); PickerOverlay.BackgroundTransparency = 0.5; PickerOverlay.Visible = false; PickerOverlay.Active = true
+local PickerBox = Instance.new("Frame", PickerOverlay); PickerBox.Size = UDim2.new(0, 220, 0, 300); PickerBox.Position = UDim2.new(0.5, -110, 0.5, -150); PickerBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30); Instance.new("UICorner", PickerBox)
+local Wheel = Instance.new("ImageLabel", PickerBox); Wheel.Size = UDim2.new(0, 180, 0, 180); Wheel.Position = UDim2.new(0, 20, 0, 20); Wheel.Image = "rbxassetid://6020299385"; Wheel.BackgroundTransparency = 1
+local ClosePick = Instance.new("TextButton", PickerBox); ClosePick.Size = UDim2.new(0.8, 0, 0, 35); ClosePick.Position = UDim2.new(0.1, 0, 1, -45); ClosePick.Text = "CONFIRM"; ClosePick.BackgroundColor3 = Color3.fromRGB(0, 150, 100); ClosePick.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", ClosePick)
 
-local currentTargetButton, currentHue, currentSat, lastColorUpdate = nil, 0, 0, 0
-local WHEEL_RADIUS = 80
-
-local function updateColorMath(input)
-    local now = os.clock()
-    if now - lastColorUpdate < 0.015 then return end
-    lastColorUpdate = now
-    local center = WheelImage.AbsolutePosition + (WheelImage.AbsoluteSize / 2)
+local currentTargetBtn, lastUpdate = nil, 0
+local function updatePicker(input)
+    if os.clock() - lastUpdate < 0.02 then return end
+    lastUpdate = os.clock()
+    local center = Wheel.AbsolutePosition + (Wheel.AbsoluteSize/2)
     local delta = Vector2.new(input.Position.X, input.Position.Y) - center
-    local dist = delta.Magnitude; local sat = math.clamp(dist / WHEEL_RADIUS, 0, 1)
-    local rawAngle = math.atan2(delta.Y, delta.X); local hue = (rawAngle + math.pi / 2) / (math.pi * 2)
-    if hue < 0 then hue = hue + 1 end; hue = hue % 1
-    local c = Color3.fromHSV(hue, sat, 1)
-    if currentTargetButton then 
-        currentTargetButton.BackgroundColor3 = c; 
-        RGBDisplay.Text = string.format("%d, %d, %d", math.round(c.R*255), math.round(c.G*255), math.round(c.B*255)) 
-    end
-    if dist > 2 then 
-        SelectorDot.Position = UDim2.new(0.5, (delta.Unit * (sat * WHEEL_RADIUS)).X, 0.5, (delta.Unit * (sat * WHEEL_RADIUS)).Y); SelectorDot.Visible = true 
-    else SelectorDot.Visible = false end
-[cite_start]end [cite: 19, 20, 21, 22, 23]
+    local dist = delta.Magnitude; if dist > 90 then return end
+    local hue = (math.atan2(delta.Y, delta.X) + math.pi/2) / (math.pi * 2)
+    if hue < 0 then hue = hue + 1 end
+    local color = Color3.fromHSV(hue, math.clamp(dist/90, 0, 1), 1)
+    if currentTargetBtn then currentTargetBtn.BackgroundColor3 = color end
+end
+Wheel.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then updatePicker(i) end end)
+Wheel.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then updatePicker(i) end end)
+ClosePick.MouseButton1Click:Connect(function() PickerOverlay.Visible = false end)
 
-WheelImage.InputBegan:Connect(function(input) 
-    if not (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then return end
-    updateColorMath(input)
-end)
-[cite_start]ClosePickerBtn.MouseButton1Click:Connect(function() PickerOverlay.Visible = false end) [cite: 24]
-
-local function openPicker(btn) 
-    currentTargetButton = btn; local c = btn.BackgroundColor3; 
-    RGBDisplay.Text = string.format("%d, %d, %d", math.round(c.R*255), math.round(c.G*255), math.round(c.B*255)); 
-    PickerOverlay.Visible = true 
-[cite_start]end [cite: 25, 28]
-
--- [[ 6. PAINTER DATA ]] --
+-- [[ 6. FACE CONFIGURATION ]] --
 local faces = {"Front", "Back", "Top", "Bottom", "Right", "Left"}
 local faceData = {}
-local nameToId = { ["Top"] = 0, ["Bottom"] = 1, ["Back"] = 2, ["Front"] = 3, ["Right"] = 4, ["Left"] = 5 }
+local nameToId = {["Top"] = 0, ["Bottom"] = 1, ["Back"] = 2, ["Front"] = 3, ["Right"] = 4, ["Left"] = 5}
 
 for _, name in ipairs(faces) do
-    [cite_start]local row = Instance.new("Frame", Container); row.Size = UDim2.new(0.95, 0, 0, 35); row.BackgroundTransparency = 1 [cite: 29]
-    local txt = Instance.new("TextBox", row); txt.Size = UDim2.new(0.75, 0, 0, 30); txt.BackgroundColor3 = Color3.fromRGB(30, 30, 35); txt.Text = "GG'S"; txt.PlaceholderText = name .. " Text"; txt.TextColor3 = Color3.new(1, 1, 1); txt.Font = Enum.Font.Gotham; txt.TextSize = 12; [cite_start]Instance.new("UICorner", txt) [cite: 30, 31, 32]
-    local clrBtn = Instance.new("TextButton", row); clrBtn.Size = UDim2.new(0.2, 0, 0, 30); clrBtn.Position = UDim2.new(0.8, 0, 0, 0); clrBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); clrBtn.Text = ""; [cite_start]Instance.new("UICorner", clrBtn) [cite: 33, 34]
-    clrBtn.MouseButton1Click:Connect(function() openPicker(clrBtn) end)
-    faceData[name] = {txtBox = txt, clrBtn = clrBtn}
+    local row = Instance.new("Frame", Container); row.Size = UDim2.new(0.95, 0, 0, 35); row.BackgroundTransparency = 1
+    local txt = Instance.new("TextBox", row); txt.Size = UDim2.new(0.7, 0, 0, 30); txt.Text = "GG'S"; txt.PlaceholderText = name.." Text"; txt.BackgroundColor3 = Color3.fromRGB(30, 30, 35); txt.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", txt)
+    local clr = Instance.new("TextButton", row); clr.Size = UDim2.new(0.25, 0, 0, 30); clr.Position = UDim2.new(0.75, 0, 0, 0); clr.BackgroundColor3 = Color3.fromRGB(255, 0, 0); clr.Text = ""; Instance.new("UICorner", clr)
+    clr.MouseButton1Click:Connect(function() currentTargetBtn = clr; PickerOverlay.Visible = true end)
+    faceData[name] = {txtBox = txt, clrBtn = clr}
 end
 
-local function createBtn(text, color)
-    local btn = Instance.new("TextButton", Container); btn.Size = UDim2.new(0.95, 0, 0, 35); btn.BackgroundColor3 = color; btn.Text = text; btn.Font = Enum.Font.GothamBold; btn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", btn); return btn
-[cite_start]end [cite: 35, 36]
-
--- [[ 7. STABLE EXECUTION LOGIC ]] --
+-- [[ 7. CORE LOGIC (PAINTER/EXECUTION) ]] --
 local useToxic, autoAnchor, spamming = true, true, false
 
-local function instantMobileExecute()
-    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local tool = LocalPlayer.Backpack:FindFirstChild("Paint") or Character:FindFirstChild("Paint")
-    if not tool then warn("Paint tool not found!") return end
-    [cite_start]if tool.Parent ~= Character then Character:WaitForChild("Humanoid"):EquipTool(tool); task.wait(0.5) end [cite: 37]
-
+local function runFix()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local tool = LocalPlayer.Backpack:FindFirstChild("Paint") or char:FindFirstChild("Paint")
+    if not tool then return end
+    if tool.Parent ~= char then char:WaitForChild("Humanoid"):EquipTool(tool); task.wait(0.4) end
     local remote = tool:FindFirstChild("Event", true) or tool:FindFirstChildWhichIsA("RemoteEvent", true)
-    local rootPart = Character:FindFirstChild("HumanoidRootPart")
+    local rootPart = char:FindFirstChild("HumanoidRootPart")
     if not remote or not brick or not rootPart then return end
-    
     local rootPos = rootPart.Position
     local key = "both \u{1F91D}"
-    local PURE_BLACK = Color3.fromRGB(0, 0, 0)
-
-    -- Base Toxic Layer
-    remote:FireServer(brick, Enum.NormalId.Top, rootPos, key, PURE_BLACK, useToxic and "toxic" or "plastic", "")
-    [cite_start]task.wait(0.6) [cite: 38]
-
-    -- Numeric Side Loop (Fixes Painter)
+    
+    -- Step 1: Base
+    remote:FireServer(brick, Enum.NormalId.Top, rootPos, key, Color3.new(0,0,0), useToxic and "toxic" or "plastic", "")
+    task.wait(0.5)
+    -- Step 2: Numeric Sides Loop (For Mobile Stability)
     for sideNum = 0, 5 do
         local faceName
-        for name, id in pairs(nameToId) do if id == sideNum then faceName = name break end end
-        local uiConfig = faceData[faceName]
-        if uiConfig then
-            local sideEnum = Enum.NormalId:GetEnumItems()[sideNum + 1] 
-            remote:FireServer(brick, sideEnum, rootPos, key, uiConfig.clrBtn.BackgroundColor3, "spray", uiConfig.txtBox.Text)
-            task.wait(0.3)
-        end
-    [cite_start]end [cite: 39, 40]
-
-    [cite_start]if autoAnchor then remote:FireServer(brick, Enum.NormalId.Top, rootPos, "material", PURE_BLACK, "anchor", "") end [cite: 41]
+        for n, id in pairs(nameToId) do if id == sideNum then faceName = n break end end
+        local cfg = faceData[faceName]
+        local sideEnum = Enum.NormalId:GetEnumItems()[sideNum + 1]
+        remote:FireServer(brick, sideEnum, rootPos, key, cfg.clrBtn.BackgroundColor3, "spray", cfg.txtBox.Text)
+        task.wait(0.25)
+    end
+    -- Step 3: Anchor
+    if autoAnchor then remote:FireServer(brick, Enum.NormalId.Top, rootPos, "material", Color3.new(0,0,0), "anchor", "") end
 end
 
--- [[ 8. BUTTON ACTIONS ]] --
-local MaterialBtn = createBtn("Material: TOXIC", Color3.fromRGB(120, 0, 200))
-MaterialBtn.MouseButton1Click:Connect(function() useToxic = not useToxic; MaterialBtn.Text = "Material: " .. (useToxic and "TOXIC" or "PLASTIC") end)
+-- [[ 8. MAIN BUTTONS ]] --
+local function createBtn(text, color)
+    local btn = Instance.new("TextButton", Container); btn.Size = UDim2.new(0.95, 0, 0, 35); btn.BackgroundColor3 = color; btn.Text = text; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.GothamBold; Instance.new("UICorner", btn); return btn
+end
 
-local AnchorBtn = createBtn("Auto-Anchor: ON", Color3.fromRGB(0, 120, 200))
-AnchorBtn.MouseButton1Click:Connect(function() autoAnchor = not autoAnchor; AnchorBtn.Text = "Auto-Anchor: " .. (autoAnchor and "ON" or "OFF") end)
+createBtn("Material: TOXIC", Color3.fromRGB(100, 0, 200)).MouseButton1Click:Connect(function(b) useToxic = not useToxic; b.Text = "Material: "..(useToxic and "TOXIC" or "OFF") end)
+createBtn("Auto-Anchor: ON", Color3.fromRGB(0, 100, 200)).MouseButton1Click:Connect(function(b) autoAnchor = not autoAnchor; b.Text = "Auto-Anchor: "..(autoAnchor and "ON" or "OFF") end)
 
-local RunBtn = createBtn("EXECUTE SEQUENCE", Color3.fromRGB(0, 150, 100))
-RunBtn.Size = UDim2.new(0.95, 0, 0, 45)
-RunBtn.MouseButton1Click:Connect(instantMobileExecute)
+local SpamBtn = createBtn("Spam Mode: OFF", Color3.fromRGB(50, 50, 55))
+SpamBtn.MouseButton1Click:Connect(function() spamming = not spamming; SpamBtn.Text = "Spam Mode: "..(spamming and "ON" or "OFF") end)
 
-local DelCubesBtn = createBtn("NUKE CUBES", Color3.fromRGB(200, 50, 0))
-local DestroyerBtn = createBtn("BKIT DESTROYER (CAREFUL)", Color3.fromRGB(220, 20, 20))
-DestroyerBtn.Size = UDim2.new(0.95, 0, 0, 50); DestroyerBtn.TextSize = 18
-
--- [[ 9. SLOTS & SAVING ]] --
-local SlotHeader = Instance.new("TextLabel", Container); SlotHeader.Size = UDim2.new(0.95, 0, 0, 30); SlotHeader.Text = "--- CONFIG SLOTS ---"; SlotHeader.TextColor3 = Color3.new(0.6, 0.6, 0.6); SlotHeader.Font = Enum.Font.GothamBold; SlotHeader.TextSize = 14; [cite_start]SlotHeader.BackgroundTransparency = 1 [cite: 43]
-local SlotNameBox = Instance.new("TextBox", Container); SlotNameBox.Size = UDim2.new(0.95, 0, 0, 35); SlotNameBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35); SlotNameBox.Text = ""; SlotNameBox.PlaceholderText = "Type Slot Name Here..."; SlotNameBox.TextColor3 = Color3.new(1,1,1); [cite_start]Instance.new("UICorner", SlotNameBox) [cite: 44, 45]
-local SaveSlotBtn = createBtn("SAVE NEW SLOT", Color3.fromRGB(70, 70, 80))
-local SlotFrame = Instance.new("Frame", Container); SlotFrame.Size = UDim2.new(0.95, 0, 0, 0); SlotFrame.AutomaticSize = Enum.AutomaticSize.Y; SlotFrame.BackgroundTransparency = 1; [cite_start]Instance.new("UIListLayout", SlotFrame).Padding = UDim.new(0, 4) [cite: 46, 47]
-
-local function toHex(c) return string.format("#%02X%02X%02X", c.R*255, c.G*255, c.B*255) end
-[cite_start]local function fromHex(hex) hex = hex:gsub("#",""); return Color3.fromRGB(tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))) end [cite: 48]
-
-SaveSlotBtn.MouseButton1Click:Connect(function()
-    local name = SlotNameBox.Text ~= "" and SlotNameBox.Text or "Unnamed_Slot"
-    local data = {anc = autoAnchor, tox = useToxic, faces = {}}
-    for _, n in ipairs(faces) do data.faces[n] = {t = faceData[n].txtBox.Text, c = toHex(faceData[n].clrBtn.BackgroundColor3)} end
-    if writefile then writefile("WindConfigs/"..name..".json", HttpService:JSONEncode(data)) end
+local ToxicPreset = createBtn("LOAD TOXIC PRESET", Color3.fromRGB(150, 0, 0))
+ToxicPreset.MouseButton1Click:Connect(function()
+    local b = "<font size='0'>dx</font>"
+    local p = {Front="F"..b.."u"..b.."c"..b.."k ADMIN", Back="HACKED BY STIK", Top="SERVER NUKED", Bottom="GGS", Right="STIK ON TOP", Left="CRY MORE"}
+    for n, t in pairs(p) do faceData[n].txtBox.Text = t; faceData[n].clrBtn.BackgroundColor3 = Color3.new(1,0,0) end
 end)
 
--- [[ 10. NUKE CUBES & DESTROYER ]] --
-DelCubesBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    local deleteTool = char:FindFirstChild("Delete") or LocalPlayer.Backpack:FindFirstChild("Delete")
-    if deleteTool and deleteTool.Parent ~= char then char.Humanoid:EquipTool(deleteTool); task.wait(0.45) end
-    local remote = deleteTool:FindFirstChild("Event", true) or deleteTool:FindFirstChildWhichIsA("RemoteEvent", true)
-    if remote then
-        local rootPos = char.HumanoidRootPart.Position
+local RunBtn = createBtn("EXECUTE SEQUENCE", Color3.fromRGB(0, 150, 80)); RunBtn.Size = UDim2.new(0.95, 0, 0, 45)
+RunBtn.MouseButton1Click:Connect(runFix)
+
+-- [[ 9. NUKE & DESTROYER ]] --
+local NukeBtn = createBtn("NUKE CUBES (DELETE)", Color3.fromRGB(200, 50, 0))
+NukeBtn.MouseButton1Click:Connect(function()
+    local tool = LocalPlayer.Backpack:FindFirstChild("Delete") or LocalPlayer.Character:FindFirstChild("Delete")
+    if not tool then return end
+    if tool.Parent ~= LocalPlayer.Character then LocalPlayer.Character.Humanoid:EquipTool(tool) end
+    local rem = tool:FindFirstChild("Event", true) or tool:FindFirstChildWhichIsA("RemoteEvent", true)
+    task.spawn(function()
         for i = 1, 300 do
-            pcall(function() remote:FireServer(nil, rootPos + Vector3.new(0, 10000, 0)) end)
+            rem:FireServer(nil, LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 15000, 0))
             task.wait(0.04)
         end
-    end
-[cite_start]end) [cite: 66, 68, 69]
+    end)
+end)
 
-DestroyerBtn.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character
-    local deleteTool = char:FindFirstChild("Delete") or LocalPlayer.Backpack:FindFirstChild("Delete")
-    if deleteTool and deleteTool.Parent ~= char then char.Humanoid:EquipTool(deleteTool); task.wait(0.2) end
-    local scriptEvent = deleteTool and deleteTool:FindFirstChild("Script") and deleteTool.Script:FindFirstChild("Event")
-    if scriptEvent then scriptEvent:FireServer(brick, char.HumanoidRootPart.Position) end
-[cite_start]end) [cite: 70]
+local DestBtn = createBtn("BKIT DESTROYER", Color3.fromRGB(255, 0, 0))
+DestBtn.MouseButton1Click:Connect(function()
+    local tool = LocalPlayer.Backpack:FindFirstChild("Delete") or LocalPlayer.Character:FindFirstChild("Delete")
+    local event = tool and tool:FindFirstChild("Script") and tool.Script:FindFirstChild("Event")
+    if event then event:FireServer(brick, LocalPlayer.Character.HumanoidRootPart.Position) end
+end)
+
+-- [[ 10. AURA SYSTEM ]] --
+local auraOn = false
+local AuraBtn = createBtn("Delete Aura: OFF", Color3.fromRGB(150, 0, 150))
+AuraBtn.MouseButton1Click:Connect(function() auraOn = not auraOn; AuraBtn.Text = "Delete Aura: "..(auraOn and "ON" or "OFF") end)
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if auraOn then
+            local tool = LocalPlayer.Backpack:FindFirstChild("Delete") or LocalPlayer.Character:FindFirstChild("Delete")
+            local rem = tool and (tool:FindFirstChild("Event", true) or tool:FindFirstChildWhichIsA("RemoteEvent", true))
+            if rem and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                for _, v in pairs(workspace:GetChildren()) do
+                    if v.Name == "Brick" and (v.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude < 35 then
+                        rem:FireServer(v, v.Position)
+                    end
+                end
+            end
+        end
+        if spamming then runFix() end
+    end
+end)
+
+-- [[ 11. SAVE / LOAD SLOTS ]] --
+local SlotBox = Instance.new("TextBox", Container); SlotBox.Size = UDim2.new(0.95, 0, 0, 30); SlotBox.PlaceholderText = "Type Slot Name..."; SlotBox.BackgroundColor3 = Color3.fromRGB(30,30,35); SlotBox.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SlotBox)
+local SaveBtn = createBtn("SAVE SLOT", Color3.fromRGB(60, 60, 70))
+local SlotListFrame = Instance.new("Frame", Container); SlotListFrame.Size = UDim2.new(0.95, 0, 0, 0); SlotListFrame.AutomaticSize = Enum.AutomaticSize.Y; SlotListFrame.BackgroundTransparency = 1; Instance.new("UIListLayout", SlotListFrame).Padding = UDim.new(0, 4)
+
+local function updateSlots()
+    for _, v in pairs(SlotListFrame:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+    if not isfolder("WindConfigs") then return end
+    for _, file in pairs(listfiles("WindConfigs")) do
+        local name = file:match("WindConfigs/(.+)%.json")
+        if name then
+            local b = createBtn(name, Color3.fromRGB(40, 40, 45))
+            b.Parent = SlotListFrame
+            b.MouseButton1Click:Connect(function()
+                local data = HttpService:JSONDecode(readfile(file))
+                for n, d in pairs(data.faces) do
+                    faceData[n].txtBox.Text = d.t
+                    faceData[n].clrBtn.BackgroundColor3 = Color3.new(d.c[1], d.c[2], d.c[3])
+                end
+            end)
+        end
+    end
+end
+
+SaveBtn.MouseButton1Click:Connect(function()
+    local name = SlotBox.Text ~= "" and SlotBox.Text or "Slot_"..os.time()
+    local data = {faces = {}}
+    for n, v in pairs(faceData) do
+        local c = v.clrBtn.BackgroundColor3
+        data.faces[n] = {t = v.txtBox.Text, c = {c.R, c.G, c.B}}
+    end
+    writefile("WindConfigs/"..name..".json", HttpService:JSONEncode(data))
+    updateSlots()
+end)
+
+updateSlots()
+print("MANE LOADED COMPLETELY - 11/11 MODULES ACTIVE.")
